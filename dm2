@@ -55,7 +55,7 @@ def create_incidence_matrix(smej_matrix):
 
     for inc, (u, v) in enumerate(edge_list):
         if u == v:
-            incidence_matrix[u][inc] = 2  # Петля
+            incidence_matrix[u][inc] = 2
         else:
             incidence_matrix[u][inc] = 1
             incidence_matrix[v][inc] = 1
@@ -76,6 +76,7 @@ def show_graph(smej_matrix):
                 G.add_edge(i, j)
 
     nx.draw(G, with_labels=True, node_color='red', node_size=500)
+    plt.title("Граф по матрице смежности")
     plt.show()
 
 def print_matrix_with_headers(matrix, col_names, row_prefix="V"):
@@ -116,9 +117,9 @@ def metric_matrix(adj_matrix):
 
     return dist
 
-def graph_characteristics(metric):
-    n = len(metric)
-    max_distances = [max(row) if max(row) != inf else 0 for row in metric]
+def graph_characteristics(metric_matr):
+    n = len(metric_matr)
+    max_distances = [max(row) if max(row) != inf else 0 for row in metric_matr]
     radius = min(max_distances)
     diameter = max(max_distances)
     central_vertices = [i for i, d in enumerate(max_distances) if d == radius]
@@ -130,8 +131,8 @@ def graph_characteristics(metric):
         'peripheral_vertices': peripheral_vertices
     }
 
-def print_metric_matrix(metric):
-    n = len(metric)
+def print_metric_matrix(metric_matr):
+    n = len(metric_matr)
     print("\nМатрица метрик (расстояний):")
     print("     ", end="")
     for i in range(n):
@@ -140,13 +141,12 @@ def print_metric_matrix(metric):
     for i in range(n):
         print(f"{'V' + str(i):<5}", end=" ")
         for j in range(n):
-            if metric[i][j] == inf:
+            if metric_matr[i][j] == inf:
                 print(f"{'∞':>6}", end=" ")
             else:
-                print(f"{metric[i][j]:>6}", end=" ")
+                print(f"{metric_matr[i][j]:>6}", end=" ")
         print()
 
-# Основной код
 print("Выберите тип графа:\n1. Простой\n2. С петлями\n3. С кратными рёбрами\n4. Полный")
 choice = int(input("Ваш выбор (1-4): "))
 n = int(input("Число вершин: "))
@@ -164,15 +164,16 @@ incidence_matrix, edge_col_names = create_incidence_matrix(adjacency_matrix)
 print("\nМатрица инцидентности:")
 print_matrix_with_headers(incidence_matrix, edge_col_names)
 
-metric = metric_matrix(adjacency_matrix)
-print_metric_matrix(metric)
+metric_matr = metric_matrix(adjacency_matrix)
+print_metric_matrix(metric_matr)
 
-chars = graph_characteristics(metric)
+chars = graph_characteristics(metric_matr)
 print("\nХарактеристики графа:")
 print(f"Радиус: {chars['radius']}")
 print(f"Диаметр: {chars['diameter']}")
 print(f"Центральные вершины: {chars['central_vertices']}")
 print(f"Периферийные вершины: {chars['peripheral_vertices']}")
+
 print("\nМатрица смежности в квадрате (количество путей длины 2):")
 adj_squared = matrix_power(adjacency_matrix, 2)
 print("     ", "  ".join(f"{h:>3}" for h in col_headers))
