@@ -1,58 +1,40 @@
-import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import math
 import random
 
 def create_adjacency_matrix(choice, n):
-    adjacency_matrix = np.zeros((n, n), dtype=int)
-    if choice == 1:
-        for i in range(n):
-            for j in range(i + 1, n):
-                if np.random.rand() < 0.4:
-                    adjacency_matrix[i][j] = 1
-                    adjacency_matrix[j][i] = 1
-    elif choice == 2:
-        for i in range(n):
-            for j in range(i + 1, n):
-                if np.random.rand() < 0.3:
-                    adjacency_matrix[i][j] = 1
-                    adjacency_matrix[j][i] = 1
-            if np.random.rand() > 0.7:
-                adjacency_matrix[i][i] = 1
-    elif choice == 3:
-        for i in range(n):
-            for j in range(i, n):
-                if np.random.rand() > 0.6:
-                    weight = np.random.randint(1, 4)
+    adjacency_matrix = [[0 for _ in range(n)] for _ in range(n)]
+    for i in range(n):
+        for j in range(i + 1, n):
+            if choice == 1:
+                if random.random() < 0.4:
+                    adjacency_matrix[i][j] = adjacency_matrix[j][i] = 1
+            elif choice == 2:
+                if random.random() < 0.3:
+                    adjacency_matrix[i][j] = adjacency_matrix[j][i] = 1
+                if random.random() > 0.7:
+                    adjacency_matrix[i][i] = 1
+            elif choice == 3:
+                if random.random() > 0.6:
+                    weight = random.randint(1, 3)
                     adjacency_matrix[i][j] += weight
                     adjacency_matrix[j][i] += weight
-    elif choice == 4:
-        for i in range(n):
-            for j in range(i + 1, n):
-                adjacency_matrix[i][j] = 1
-                adjacency_matrix[j][i] = 1
+            elif choice == 4:
+                adjacency_matrix[i][j] = adjacency_matrix[j][i] = 1
     return adjacency_matrix
 
 def create_incidence_matrix(adjacency_matrix):
     n = len(adjacency_matrix)
-    edge_count = 0
-    for i in range(n):
-        for j in range(i, n):
-            if adjacency_matrix[i][j] > 0:
-                if i == j:
-                    edge_count += adjacency_matrix[i][j]
-                else:
-                    edge_count += adjacency_matrix[i][j]
-    incidence_matrix = np.zeros((n, edge_count), dtype=int)
+    edge_count = sum(adjacency_matrix[i][j] for i in range(n) for j in range(i, n))
+    incidence_matrix = [[0 for _ in range(edge_count)] for _ in range(n)]
     current_edge = 0
     for i in range(n):
         for j in range(i, n):
-            if adjacency_matrix[i][j] > 0:
-                for _ in range(adjacency_matrix[i][j]):
-                    incidence_matrix[i][current_edge] += 1
-                    incidence_matrix[j][current_edge] += 1
-                    current_edge += 1
+            for _ in range(adjacency_matrix[i][j]):
+                incidence_matrix[i][current_edge] += 1
+                incidence_matrix[j][current_edge] += 1
+                current_edge += 1
     return incidence_matrix
 
 def get_vertices_and_edges(adjacency_matrix):
@@ -61,59 +43,76 @@ def get_vertices_and_edges(adjacency_matrix):
     edges = []
     for i in range(n):
         for j in range(i, n):
-            if adjacency_matrix[i][j] > 0:
-                if i == j:
-                    for _ in range(adjacency_matrix[i][j]):
-                        edges.append((i, i))
-                else:
-                    for _ in range(adjacency_matrix[i][j]):
-                        edges.append((i, j))
+            for _ in range(adjacency_matrix[i][j]):
+                edges.append((i, j))
     return vertices, edges
 
 def show_graph(adjacency_matrix, title):
-    G = nx.from_numpy_array(adjacency_matrix)
+    G = nx.Graph()
+    n = len(adjacency_matrix)
+    for i in range(n):
+        G.add_node(i)
+        for j in range(i, n):
+            for _ in range(adjacency_matrix[i][j]):
+                if i == j:
+                    G.add_edge(i, i)
+                else:
+                    G.add_edge(i, j)
     plt.figure(figsize=(8, 6))
     nx.draw(G, with_labels=True, node_color='red', node_size=500)
     plt.title(title)
     plt.show()
 
+
+def mat_mult(A, B):
+    n = len(A)
+    C = [[0 for _ in range(n)] for _ in range(n)]
+    for i in range(n):
+        for j in range(n):
+            for k in range(n):
+                C[i][j] += A[i][k] * B[k][j]
+    return C
+
+
+def mat_pow(M, exp):
+    n = len(M)
+    result = [[0 for _ in range(n)] for _ in range(n)]
+    for i in range(n):
+        result[i][i] = 1
+    for _ in range(exp):
+        result = mat_mult(result, M)
+    return result
+
 def metric(matr):
     n = len(matr)
     zap = False
     ust = False
-    matrMetrix = [[0 for i in range(n)] for j in range(n)]
+    matrMetrix = [[0 for _ in range(n)] for _ in range(n)]
     p = 1
+
     while not zap and not ust:
-        null = 0
-        for i in range(n):
-            for j in range(i, n):
-                if matrMetrix[i][j] == 0:
-                    null += 1
+        null = sum(1 for i in range(n) for j in range(i, n) if matrMetrix[i][j] == 0)
         for i in range(n):
             for j in range(i + 1, n):
                 if matr[i][j] != 0 and matrMetrix[i][j] == 0:
-                    matrMetrix[i][j] = p
-                    matrMetrix[j][i] = p
-        if null == 0:
-            zap = True
-            break
-        newMatr = np.linalg.matrix_power(matr, p + 1)
+                    matrMetrix[i][j] = matrMetrix[j][i] = p
+
+        newMatr = mat_pow(matr, p + 1)
         ust = True
         for i in range(n):
             for j in range(i + 1, n):
                 if newMatr[i][j] != 0 and matrMetrix[i][j] == 0:
                     ust = False
-                if newMatr[i][j] != 0 and matrMetrix[i][j] == 0:
-                    matrMetrix[i][j] = p + 1
-                    matrMetrix[j][i] = p + 1
+                    matrMetrix[i][j] = matrMetrix[j][i] = p + 1
+
         p += 1
-        matr = newMatr.copy()
+        matr = [row.copy() for row in newMatr]
+
     return matrMetrix
 
 def poiske(matrMetrix):
-    metric = matrMetrix
-    t = [max(row) for row in metric]
-    t.sort(reverse=True)
+    metric_m = matrMetrix
+    t = sorted([max(row) for row in metric_m], reverse=True)
     d = t[0]
     r = math.inf
     for v in t:
@@ -125,8 +124,8 @@ def poiske(matrMetrix):
         r = max(t)
     if len(set(t)) == 1:
         r = d = t[0]
-    cv = [i for i, row in enumerate(metric) if max(row) == r]
-    pv = [i for i, row in enumerate(metric) if max(row) == d]
+    cv = [i for i, row in enumerate(metric_m) if max(row) == r]
+    pv = [i for i, row in enumerate(metric_m) if max(row) == d]
     if d == 0:
         d = math.inf
     if r == 0:
@@ -141,11 +140,13 @@ adjacency_matrix = create_adjacency_matrix(choice, n)
 titles = ["Простой граф", "Граф с петлями", "Граф с кратными рёбрами", "Полный граф"]
 
 print("\nМатрица смежности:")
-print(adjacency_matrix)
+for row in adjacency_matrix:
+    print(row)
 
 incidence_matrix = create_incidence_matrix(adjacency_matrix)
 print("\nМатрица инцидентности:")
-print(incidence_matrix)
+for row in incidence_matrix:
+    print(row)
 
 vertices, edges_list = get_vertices_and_edges(adjacency_matrix)
 print("\nСписок вершин:")
