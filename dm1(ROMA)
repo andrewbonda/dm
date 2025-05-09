@@ -63,74 +63,6 @@ def show_graph(adjacency_matrix, title):
     plt.show()
 
 
-def mat_mult(A, B):
-    n = len(A)
-    C = [[0 for _ in range(n)] for _ in range(n)]
-    for i in range(n):
-        for j in range(n):
-            for k in range(n):
-                C[i][j] += A[i][k] * B[k][j]
-    return C
-
-
-def mat_pow(M, exp):
-    n = len(M)
-    result = [[0 for _ in range(n)] for _ in range(n)]
-    for i in range(n):
-        result[i][i] = 1
-    for _ in range(exp):
-        result = mat_mult(result, M)
-    return result
-
-def metric(matr):
-    n = len(matr)
-    zap = False
-    ust = False
-    matrMetrix = [[0 for _ in range(n)] for _ in range(n)]
-    p = 1
-
-    while not zap and not ust:
-        null = sum(1 for i in range(n) for j in range(i, n) if matrMetrix[i][j] == 0)
-        for i in range(n):
-            for j in range(i + 1, n):
-                if matr[i][j] != 0 and matrMetrix[i][j] == 0:
-                    matrMetrix[i][j] = matrMetrix[j][i] = p
-
-        newMatr = mat_pow(matr, p + 1)
-        ust = True
-        for i in range(n):
-            for j in range(i + 1, n):
-                if newMatr[i][j] != 0 and matrMetrix[i][j] == 0:
-                    ust = False
-                    matrMetrix[i][j] = matrMetrix[j][i] = p + 1
-
-        p += 1
-        matr = [row.copy() for row in newMatr]
-
-    return matrMetrix
-
-def poiske(matrMetrix):
-    metric_m = matrMetrix
-    t = sorted([max(row) for row in metric_m], reverse=True)
-    d = t[0]
-    r = math.inf
-    for v in t:
-        if v != d:
-            r = v
-            break
-    if 0 in t:
-        d = 0
-        r = max(t)
-    if len(set(t)) == 1:
-        r = d = t[0]
-    cv = [i for i, row in enumerate(metric_m) if max(row) == r]
-    pv = [i for i, row in enumerate(metric_m) if max(row) == d]
-    if d == 0:
-        d = math.inf
-    if r == 0:
-        r = math.inf
-    return r, d, cv, pv
-
 print("Выберите тип графа:\n1. Простой\n2. С петлями\n3. С кратными рёбрами\n4. Полный")
 choice = int(input("Ваш выбор (1-4): "))
 n = int(input("Число вершин: "))
@@ -155,13 +87,4 @@ print(edges_list)
 
 show_graph(adjacency_matrix, titles[choice - 1])
 
-matrMetric = metric(adjacency_matrix)
-print('\nМатрица метрики:')
-for row in matrMetric:
-    print(row)
 
-r, d, cv, pv = poiske(matrMetric)
-print("\nРадиус графа:", r)
-print("Диаметр графа:", d)
-print("Центральные вершины:", cv)
-print("Периферийные вершины:", pv)
