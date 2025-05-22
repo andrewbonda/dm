@@ -1,0 +1,121 @@
+import random
+import networkx as nx
+import matplotlib.pyplot as plt
+
+def create_smej_matrix(choice, n):
+    smej_matrix = [[0 for _ in range(n)] for _ in range(n)]
+
+    if choice == 1: 
+        for i in range(n):
+            for j in range(i + 1, n):
+                if random.randint(0, 1) == 1:
+                    weight = random.randint(1, 10)
+                    smej_matrix[i][j] = weight
+                    smej_matrix[j][i] = weight
+
+    elif choice == 2:  
+        for i in range(n):
+            for j in range(i + 1, n):
+                if random.randint(0, 1) == 1:
+                    weight = random.randint(1, 10)
+                    smej_matrix[i][j] = weight
+                    smej_matrix[j][i] = weight
+            if random.randint(0, 1) == 1:
+                weight = random.randint(1, 10)
+                smej_matrix[i][i] = weight
+
+    elif choice == 3:  
+        for i in range(n):
+            for j in range(i, n):
+                if random.randint(0, 1) == 1:
+                    weight = random.randint(1, 10)
+                    if smej_matrix[i][j] == 0:
+                        smej_matrix[i][j] = weight
+                        smej_matrix[j][i] = weight
+                    else:
+                        smej_matrix[i][j] = min(smej_matrix[i][j], weight)
+                        smej_matrix[j][i] = min(smej_matrix[j][i], weight)
+
+    elif choice == 4: 
+        for i in range(n):
+            for j in range(i + 1, n):
+                weight = random.randint(1, 10)
+                smej_matrix[i][j] = weight
+                smej_matrix[j][i] = weight
+
+    return smej_matrix
+
+def matrix_to_adj_list(matrix):
+    adj_list = {}
+    for i in range(len(matrix)):
+        adj_list[i] = {}
+        for j in range(len(matrix[i])):
+            if matrix[i][j] != 0:
+                adj_list[i][j] = matrix[i][j]
+    return adj_list
+
+def dijkstra(graph, start):
+    distances = {vertex: float('infinity') for vertex in graph}
+    distances[start] = 0
+    unvisited = set(graph.keys())
+    
+    while unvisited:
+        current_vertex = min(unvisited, key=lambda vertex: distances[vertex])
+        unvisited.remove(current_vertex)
+        
+        if distances[current_vertex] == float('infinity'):
+            break
+        
+        for neighbor, weight in graph[current_vertex].items():
+            distance = distances[current_vertex] + weight
+            
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+    
+    return distances
+
+def visualize_graph(graph, start_vertex, distances):
+    G = nx.Graph()
+    
+    for u in graph:
+        for v, weight in graph[u].items():
+            G.add_edge(u, v, weight=weight)
+    
+    pos = nx.spring_layout(G)
+    
+    node_colors = ['red' if node == start_vertex else 'lightblue' for node in G.nodes()]
+    edge_colors = ['black'] * len(G.edges())
+    
+    plt.figure(figsize=(10, 8))
+    nx.draw(G, pos, with_labels=True, node_color=node_colors, edge_color=edge_colors, node_size=700, font_size=15, font_weight='bold')
+    
+    labels = nx.get_edge_attributes(G, 'weight')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, font_color='red', font_weight='bold')
+    
+    plt.title(f"Кратчайшие пути от вершины {start_vertex}")
+    plt.show()
+
+n = int(input("Введите количество вершин: "))
+
+print("Выберите тип графа:")
+print("1 - Простой граф без петель и кратных ребер")
+print("2 - Граф с петлями")
+print("3 - Граф с кратными ребрами")
+print("4 - Полный граф")
+choice = int(input("Введите номер типа графа: "))
+
+smej_matrix = create_smej_matrix(choice, n)
+
+adj_list = matrix_to_adj_list(smej_matrix)
+
+start_vertex = int(input("Введите начальную вершину (от 0 до {}): ".format(n - 1)))
+
+distances = dijkstra(adj_list, start_vertex)
+
+print(f"Кратчайшие пути от вершины {start_vertex}: {distances}")
+
+print("Матрица смежности:")
+for row in smej_matrix:
+    print(row)
+
+visualize_graph(adj_list, start_vertex, distances)
