@@ -1,14 +1,9 @@
 import random
 import matplotlib.pyplot as plt
 import networkx as nx
-from itertools import combinations
-
 
 def create_smej_matrix(choice, n):
-    smej_matrix = []
-    for i in range(n):
-        row = [0 for _ in range(n)]
-        smej_matrix.append(row)
+    smej_matrix = [[0]*n for _ in range(n)]
 
     if choice == 1:
         for i in range(n):
@@ -42,6 +37,25 @@ def create_smej_matrix(choice, n):
     return smej_matrix
 
 
+# Ручная реализация combinations
+def combinations(lst, r):
+    n = len(lst)
+    if r > n:
+        return []
+    indices = list(range(r))
+    yield [lst[i] for i in indices]
+    while True:
+        for i in reversed(range(r)):
+            if indices[i] != i + n - r:
+                break
+        else:
+            return
+        indices[i] += 1
+        for j in range(i+1, r):
+            indices[j] = indices[j-1] + 1
+        yield [lst[i] for i in indices]
+
+
 def find_max_empty_subgraphs(adj_matrix):
     """Поиск ВСЕХ максимальных пустых подграфов (независимых множеств)."""
     n = len(adj_matrix)
@@ -49,13 +63,19 @@ def find_max_empty_subgraphs(adj_matrix):
     max_size = 0
     max_empty_subgraphs = []
 
-    # Перебор всех возможных подмножеств вершин
     for size in range(n, 0, -1):
         for candidate in combinations(vertices, size):
             is_independent = True
-            for u, v in combinations(candidate, 2):
-                if adj_matrix[u][v] == 1:
-                    is_independent = False
+            # Проверяем все пары в кандидате
+            cand_list = list(candidate)
+            for i in range(len(cand_list)):
+                for j in range(i + 1, len(cand_list)):
+                    u = cand_list[i]
+                    v = cand_list[j]
+                    if adj_matrix[u][v] == 1:
+                        is_independent = False
+                        break
+                if not is_independent:
                     break
             if is_independent:
                 if size > max_size:
@@ -63,9 +83,8 @@ def find_max_empty_subgraphs(adj_matrix):
                     max_empty_subgraphs = [list(candidate)]
                 elif size == max_size:
                     max_empty_subgraphs.append(list(candidate))
-        if max_empty_subgraphs:  # Если уже найдены подграфы максимального размера, останавливаемся
-            break
-
+        if max_empty_subgraphs:
+            return max_empty_subgraphs
     return max_empty_subgraphs
 
 
@@ -76,13 +95,18 @@ def find_max_complete_subgraphs(adj_matrix):
     max_size = 0
     max_complete_subgraphs = []
 
-    # Перебор всех возможных подмножеств вершин
     for size in range(n, 0, -1):
         for candidate in combinations(vertices, size):
             is_clique = True
-            for u, v in combinations(candidate, 2):
-                if adj_matrix[u][v] == 0:
-                    is_clique = False
+            cand_list = list(candidate)
+            for i in range(len(cand_list)):
+                for j in range(i + 1, len(cand_list)):
+                    u = cand_list[i]
+                    v = cand_list[j]
+                    if adj_matrix[u][v] == 0:
+                        is_clique = False
+                        break
+                if not is_clique:
                     break
             if is_clique:
                 if size > max_size:
@@ -90,34 +114,29 @@ def find_max_complete_subgraphs(adj_matrix):
                     max_complete_subgraphs = [list(candidate)]
                 elif size == max_size:
                     max_complete_subgraphs.append(list(candidate))
-        if max_complete_subgraphs:  # Если уже найдены подграфы максимального размера, останавливаемся
-            break
-
+        if max_complete_subgraphs:
+            return max_complete_subgraphs
     return max_complete_subgraphs
 
 
 def color_graph(adj_matrix):
-    """Ручная раскраска графа жадным методом. Возвращает словарь цветов и хроматическое число."""
-    n = len(adj_matrix)                          # Число вершин
-    colors = [-1] * n                             # Изначально у всех вершин нет цвета (-1)
-    
-    for u in range(n):                            # Перебираем вершины
-        used_colors = set()                       # Множество использованных цветов соседей
-        for v in range(n):                        # Проверяем всех соседей вершины u
-            if adj_matrix[u][v] == 1 and colors[v] != -1:
-                used_colors.add(colors[v])        # Добавляем цвет соседа
+    """Ручная раскраска графа жадным методом."""
+    n = len(adj_matrix)
+    colors = [-1] * n
 
-        # Ищем наименьший неиспользованный цвет
+    for u in range(n):
+        used_colors = set()
+        for v in range(n):
+            if adj_matrix[u][v] == 1 and colors[v] != -1:
+                used_colors.add(colors[v])
         color = 0
         while color in used_colors:
             color += 1
-        colors[u] = color                         # Назначаем цвет вершине
+        colors[u] = color
 
-    # Формируем словарь вида {вершина: цвет}
     coloring = {i: colors[i] for i in range(n)}
     chromatic_number = max(colors) + 1
     return coloring, chromatic_number
-
 
 
 def draw_colored_graph(adj_matrix, coloring):
@@ -130,7 +149,7 @@ def draw_colored_graph(adj_matrix, coloring):
         for j in range(i + 1, n):
             if adj_matrix[i][j] == 1:
                 G.add_edge(i, j)
-    
+
     colors = [coloring[node] for node in G.nodes()]
     nx.draw(G, with_labels=True, node_color=colors, cmap=plt.cm.tab10, node_size=500)
     plt.title("Раскрашенный граф")
@@ -149,22 +168,22 @@ print("     ", "  ".join(f"{h:>3}" for h in col_headers))
 for idx, row in enumerate(adjacency_matrix):
     print(f"V{idx:<2} ", "  ".join(f"{val:>3}" for val in row))
 
-# Раскраска графа и вывод хроматического числа
+# Раскраска графа
 coloring, chromatic_number = color_graph(adjacency_matrix)
 print(f"\nРаскраска графа: {coloring}")
 print(f"Хроматическое число: {chromatic_number}")
 
-# Поиск всех максимальных пустых подграфов
+# Поиск максимальных пустых подграфов
 max_empty_subgraphs = find_max_empty_subgraphs(adjacency_matrix)
 print("\nВсе максимальные пустые подграфы (независимые множества):")
 for i, subgraph in enumerate(max_empty_subgraphs, 1):
     print(f"{i}. {subgraph}")
 
-# Поиск всех максимальных полных подграфов
+# Поиск максимальных полных подграфов
 max_complete_subgraphs = find_max_complete_subgraphs(adjacency_matrix)
 print("\nВсе максимальные полные подграфы (клики):")
 for i, subgraph in enumerate(max_complete_subgraphs, 1):
     print(f"{i}. {subgraph}")
 
-# Отрисовка раскрашенного графа
+# Отрисовка графа
 draw_colored_graph(adjacency_matrix, coloring)
