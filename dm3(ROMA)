@@ -1,15 +1,35 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from itertools import combinations
 
-def is_independent_set(G, nodes):
+def combinations(iterable, r):
+    """Генерирует все возможные комбинации длины r из элементов iterable."""
+    pool = list(iterable)
+    n = len(pool)
+    if r > n:
+        return
+    indices = list(range(r))
+    yield tuple(pool[i] for i in indices)
+    while True:
+        # Найти первый индекс, который можно увеличить
+        for i in reversed(range(r)):
+            if indices[i] != i + n - r:
+                break
+        else:
+            return
+        # Увеличить индекс и сбросить последующие
+        indices[i] += 1
+        for j in range(i + 1, r):
+            indices[j] = indices[j - 1] + 1
+        yield tuple(pool[k] for k in indices)
+    
+def independent(G, nodes):
     """Проверяет, является ли данный набор вершин независимым (т.е. все вершины несмежны)."""
     for u, v in combinations(nodes, 2):
         if G.has_edge(u, v):
             return False
     return True
 
-def find_maximal_independent_sets(G):
+def max_independent(G):
     """Находит все максимальные независимые множества (множества, которые нельзя расширить)."""
     nodes = list(G.nodes())
     maximal_sets = []
@@ -17,7 +37,7 @@ def find_maximal_independent_sets(G):
     for r in range(1, len(nodes) + 1):
         for subset in combinations(nodes, r):
             subset = set(subset)
-            if is_independent_set(G, subset):
+            if independent(G, subset):
                 # Проверка на максимальность
                 if not any(subset < s for s in maximal_sets):
                     # Удаляем все подмножества текущего множества
@@ -31,7 +51,7 @@ def find_maximal_independent_sets(G):
 
 def maigwessman_coloring(G):
     """Метод окрашивания графа по алгоритму Вессмана."""
-    independent_sets = find_maximal_independent_sets(G)
+    independent_sets = max_independent(G)
     independent_sets.sort(key=lambda s: -len(s))  # Сортировка по убыванию размера
 
     color_map = {}
