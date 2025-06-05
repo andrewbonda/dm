@@ -1,1 +1,82 @@
+import matplotlib.pyplot as plt
+import networkx as nx
+import random
+
+def graph_create(graph_type, graph_size):
+    if graph_type == 1:  # Простой граф
+        print("Матрица смежности для простого графа:")
+        adjacency_matrix = [[random.randint(0, 1) for _ in range(graph_size)] for _ in range(graph_size)]
+        for i in range(graph_size):
+            adjacency_matrix[i][i] = 0
+    elif graph_type == 2:  # Полный граф
+        print("Матрица смежности для полного графа:")
+        adjacency_matrix = [[1 for _ in range(graph_size)] for _ in range(graph_size)]
+        for i in range(graph_size):
+            adjacency_matrix[i][i] = 0
+    elif graph_type == 3:  # Граф с петлями
+        print("Матрица смежности для графа с петлями:")
+        adjacency_matrix = [[random.randint(0, 1) for _ in range(graph_size)] for _ in range(graph_size)]
+    return adjacency_matrix
+
+def graph_print(adjacency_matrix):
+    for row in adjacency_matrix:
+        print(' '.join(map(str, row)))
+
+
+def weight_matrix(adjacency_matrix):
+    n = len(adjacency_matrix)
+    weight_matrix = [[0 for _ in range(n)] for _ in range(n)]
+    for i in range(n):
+        for j in range(n):
+            if adjacency_matrix[i][j] > 0:
+                weight_matrix[i][j] = random.randint(1, 20)
+            else:
+                weight_matrix[i][j] = 0
+    return weight_matrix
+
+def dijkstra(graph, start):
+    n = len(graph)
+    distances = [float('inf')] * n
+    distances[start] = 0
+    visited = [False] * n
+    
+    for _ in range(n):
+        min_distance = float('inf')
+        min_node = -1
+        for node in range(n):
+            if not visited[node] and distances[node] < min_distance:
+                min_distance = distances[node]
+                min_node = node
+        
+        if min_node == -1:
+            break
+        visited[min_node] = True
+        
+        for neighbor in range(n):
+            if graph[min_node][neighbor] != 0:
+                new_distance = distances[min_node] + graph[min_node][neighbor]
+                if new_distance < distances[neighbor]:
+                    distances[neighbor] = new_distance
+    
+    return distances
+
+
+print("1 - простой граф\n2 - полный граф\n3 - граф с петлями")
+graph_type = int(input("Введите номер: "))
+graph_size = int(input("Введите размерность матрицы: "))
+adjacency_matrix = graph_create(graph_type, graph_size)
+weight_matrix = weight_matrix(adjacency_matrix)
+graph_print(adjacency_matrix)
+
+start_node = int(input("Введите номер начальной вершины: "))
+shortest_distances = dijkstra(weight_matrix, start_node)
+
+print("\nКратчайшие расстояния:")
+for node in range(len(shortest_distances)):
+    distance = shortest_distances[node]
+    if distance == float('inf'):
+        print(f"От {start_node} до {node}: ∞")
+    else:
+        print(f"От {start_node} до {node}: {distance}")
+
 
